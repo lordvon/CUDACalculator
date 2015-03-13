@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>CUDA Calc</h1>
+<div>Given your register, shared memory, thread, and block  requirements, CUDA Calc will determine the bottle necks.</div>
+
+<h2>Inputs</h2>
+
+<h3>Program Requirements</h3>
+<div><input type="text" id="reg" value="20"> (32-Bit Registers Per Thread) </div>
+<div><input type="text" id="sha" value="2"> (Shared Memory Per Block, KB) </div>
+<div><input type="text" id="thr" value="128"> (Threads Per Block) </div>
+<!--<div><input type="text" id="blo" value="100"> (Blocks) </div>-->
+
+<h3>Hardware Limits</h3>
+<div>
+	Compute Capability: <select onchange="setHardwareSettings(this)">
+  		<option value="2.x">2.x</option>
+  		<option value="3.0">3.0</option>
+  		<option value="3.5">3.5</option>
+  		<option value="5.0">5.0</option>
+  		<option value="5.2">5.2</option>
+	</select>
+</div>
+<div><input type="text" id="rpt" value="63"> (Max 32-Bit Registers Per Thread) </div>
+<div><input type="text" id="rpm" value="32768"> (Max 32-Bit Registers Per MP) </div>
+<div><input type="text" id="tpb" value="1024"> (Max Threads Per Block) </div>
+<div><input type="text" id="tpm" value="1536"> (Max Resident Threads Per MP) </div>
+<div><input type="text" id="wpm" value="48"> (Max Resident Warps Per MP) </div>
+<div><input type="text" id="bpm" value="8"> (Max Resident Blocks Per MP) </div>
+<div><input type="text" id="spm" value="48"> (Max Shared Memory Per MP, KB) </div>
+<div><input type="text" id="tpw" value="32"> (Threads Per Warp) </div>
+
+<p><button onclick="getInfo()">Calculate</button></p>
+
+<h3>Results</h3>
+<div id="bb"></div>
+<div id="tt"></div>
+<div id="rr"></div>
+
+
+<script type="text/javascript">
+function gv(myid){
+	return document.getElementById(myid).value;
+}
+function st(myid,text){
+	document.getElementById(myid).innerHTML = text;
+}
+function min(aa){
+	var mm = aa[0];
+	for (i=0;i<aa.length;++i) {
+		if(mm>aa[i]){
+			mm=aa[i];
+		}
+	}
+	return mm;
+}
+function getInfo(){
+	var bb = blocks();
+	var tt = bb*gv("thr");
+	var rr = tt*gv("reg");
+	st("bb",bb+" blocks per MP");
+	st("tt",tt+" threads per MP");
+	st("rr",rr+" registers per MP");
+}
+function blocks(){
+	var registersPerBlock = gv("reg")*gv("thr");// register limit
+	var warpsPerBlock = gv("thr")/gv("tpw");
+
+	var blocksPerMP_warpLimit = Math.floor(gv("wpm")/warpsPerBlock);// warps limit
+	var blocksPerMP_regLimit = Math.floor(gv("rpm")/registersPerBlock);// thread limit
+	var blocksPerMP_threadLimit = Math.floor(gv("tpm")/gv("thr"));// thread limit
+	var blocksPerMP_shmemLimit = Math.floor(gv("spm")/gv("sha"));// shared memory limit
+	var blocksPerMP_hwLimit = gv("bpm");// hardware limit
+	var blockLimits = [	blocksPerMP_warpLimit,
+						blocksPerMP_regLimit,
+						blocksPerMP_threadLimit,
+						blocksPerMP_shmemLimit,
+						blocksPerMP_hwLimit];
+						//alert(blocksPerMP_warpLimit);
+	return min(blockLimits);
+}
+function sv(myid, val){
+	document.getElementById(myid).value = val;
+}
+function setHardwareSettings(sel){
+	var val = sel.value;
+	if(val=="2.x"){
+		sv("rpt",63);
+		sv("rpm",32768);
+		sv("tpb",1024);
+		sv("tpm",1536);
+		sv("wpm",48);
+		sv("bpm",8);
+		sv("spm",48);
+		sv("tpw",32);
+	} else if(val=="3.0"){
+		sv("rpt",63);
+		sv("rpm",65536);
+		sv("tpb",1024);
+		sv("tpm",2048);
+		sv("wpm",64);
+		sv("bpm",16);
+		sv("spm",48);
+		sv("tpw",32);
+	} else if(val=="3.5"){
+		sv("rpt",255);
+		sv("rpm",65536);
+		sv("tpb",1024);
+		sv("tpm",2048);
+		sv("wpm",64);
+		sv("bpm",16);
+		sv("spm",48);
+		sv("tpw",32);
+	} else if(val=="5.0"){
+		sv("rpt",255);
+		sv("rpm",65536);
+		sv("tpb",1024);
+		sv("tpm",2048);
+		sv("wpm",64);
+		sv("bpm",32);
+		sv("spm",64);
+		sv("tpw",32);
+	} else if(val=="5.2"){
+		sv("rpt",255);
+		sv("rpm",65536);
+		sv("tpb",1024);
+		sv("tpm",2048);
+		sv("wpm",64);
+		sv("bpm",32);
+		sv("spm",96);
+		sv("tpw",32);
+	}
+}
+
+</script>
+</body>
+</html>
